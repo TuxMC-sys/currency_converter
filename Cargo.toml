@@ -1,6 +1,6 @@
 [package]
-name = "currency_converter"
-version = "0.2.1"
+name = "oer_conversion_rates"
+version = "1.0.0"
 edition = "2021"
 readme = "README.md"
 description = "A minimalist terminal currency convertor"
