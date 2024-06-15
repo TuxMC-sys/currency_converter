@@ -1,4 +1,4 @@
-## A minimalist terminal currency convertor
+## A minimalist terminal currency converter
 **How to run**
 ```
 currency_converter amount starting_currency_code currency_to_convert_to (optional: -r)
