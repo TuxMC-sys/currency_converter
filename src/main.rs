@@ -6,7 +6,7 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::to_vec;
-use std::{collections::HashMap, fs, fs::File, io, io::Write, path::PathBuf};
+use std::{collections::HashMap, ffi::OsString, fs::{self, File}, io::{self, Write}, path::PathBuf};
 #[derive(Parser)]
 #[command(
     version,
@@ -59,7 +59,7 @@ async fn request_rates() -> ApiReturn {
     serde_json::from_str(response.as_str()).unwrap()
 }
 fn app_id() -> String {
-    let mut path = config_file().into_os_string();
+    let mut path = get_data_dir();
     path.push("app_id");
     let app_id_string = fs::read_to_string(path.as_os_str());
     match app_id_string {
@@ -75,13 +75,13 @@ fn app_id() -> String {
     }
 }
 fn save_currencies(save_json: ApiReturn) {
-    let mut path = config_file().into_os_string();
+    let mut path = get_data_dir();
     path.push("currency.json");
     fs::write(path.as_os_str(), to_vec(&save_json).unwrap())
         .expect("Should create or overwrite file.");
 }
 fn load_currencies() -> ApiReturn {
-    let mut path = config_file().into_os_string();
+    let mut path = get_data_dir();
     path.push("currency.json");
     serde_json::from_slice(&fs::read(path).expect("Re-run and refresh your currencies.")).unwrap()
 }
@@ -99,7 +99,7 @@ fn convert_currencies(currency_map: HashMap<String, f32>, arguments: Cli) {
     )
 }
 
-fn config_file() -> PathBuf {
+fn get_data_dir() -> OsString {
     PathBuf::from(
         &[
             home_dir()
@@ -109,5 +109,5 @@ fn config_file() -> PathBuf {
             "/Documents/".to_string(),
         ]
         .join(""),
-    )
+    ).into_os_string()
 }
