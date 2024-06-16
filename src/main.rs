@@ -6,7 +6,8 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::to_vec;
-use std::{collections::HashMap, ffi::OsString, fs::{self, File}, io::{self, Write}, path::PathBuf};
+use std::{collections::HashMap, ffi::OsString, fs::{self, File}, io::Write, path::PathBuf};
+use human_panic::setup_panic;
 #[derive(Parser)]
 #[command(
     version,
@@ -19,6 +20,8 @@ struct Cli {
     final_currency: String,
     #[arg(short, long, help = "Gets latest exchange rates using your API key.")]
     refresh: bool,
+    #[arg(short, long, help = "Changes API key.")]
+    key: Option<String>
 }
 #[derive(Deserialize, Serialize)]
 struct ApiReturn {
@@ -30,14 +33,15 @@ struct ApiReturn {
 }
 #[tokio::main]
 async fn main() {
+    setup_panic!();
     let cli = Cli::parse();
-    if cli.refresh {
-        save_currencies(request_rates().await);
+    if cli.refresh || cli.key != None {
+        save_currencies(request_rates(&cli.key).await);
     }
     convert_currencies(load_currencies().rates, cli);
 }
-async fn request_rates() -> ApiReturn {
-    let app_id = app_id();
+async fn request_rates(key: &Option<String>) -> ApiReturn {
+    let app_id = app_id(key.clone());
     let url = format!(
         "https://openexchangerates.org/api/latest.json?app_id={app_id}&base=USD&prettyprint=true&show_alternative=true"
     );
@@ -52,25 +56,27 @@ async fn request_rates() -> ApiReturn {
         .headers(headers)
         .send()
         .await
-        .unwrap()
+        .expect("You may not be connected to internet, re-run without the -r flag.")
         .text()
         .await
         .unwrap();
     serde_json::from_str(response.as_str()).unwrap()
 }
-fn app_id() -> String {
+fn app_id(key: Option<String>) -> String {
     let mut path = get_data_dir();
     path.push("app_id");
+    if let Some(key) = key {
+        let mut file = File::create(path).unwrap();
+        file.write_all(key.as_bytes()).unwrap();
+        return key;
+    } 
     let app_id_string = fs::read_to_string(path.as_os_str());
     match app_id_string {
         Ok(app_id_string) => app_id_string,
         _err => {
-            let mut app_id = String::new();
-            println!("Input your openexchangerates.org app id");
-            io::stdin().read_line(&mut app_id).unwrap();
-            let mut file = File::create(path).unwrap();
-            file.write_all(app_id.as_bytes()).unwrap();
-            app_id
+            println!("You have not previously provided an API key using the -k flag.");
+            println!("Please re-run the program and provide one using the -k flag.");
+            std::process::exit(0);
         }
     }
 }
