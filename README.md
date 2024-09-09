@@ -1,11 +1,11 @@
 ## A minimalist terminal currency converter
 **How to run**
 ```
-currency_converter amount starting_currency_code currency_to_convert_to (optional: -r,-k)
+oer_conversion_rates amount starting_currency_code currency_to_convert_to (optional: -r,-k)
 ```
 Example:
 ```
-$ currency_converter 500 USD GBP
+$ oer_conversion_rates 500 USD GBP
 500 USD is 394.5705 GBP
 ```
 It uses the [OER](openexchangerates.org) API with a user provided API key.
