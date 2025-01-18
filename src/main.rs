@@ -16,7 +16,7 @@ use human_panic::setup_panic;
 )]
 struct Cli {
     amount: f32,
-    orgin_currency: String,
+    origin_currency: String,
     final_currency: String,
     #[arg(short, long, help = "Gets latest exchange rates using your API key.")]
     refresh: bool,
@@ -35,7 +35,7 @@ struct ApiReturn {
 async fn main() {
     setup_panic!();
     let cli = Cli::parse();
-    if cli.refresh || cli.key != None {
+    if cli.refresh || cli.key.is_some() {
         save_currencies(request_rates(&cli.key).await);
     }
     convert_currencies(load_currencies().rates, cli);
@@ -92,16 +92,16 @@ fn load_currencies() -> ApiReturn {
     serde_json::from_slice(&fs::read(path).expect("Re-run and refresh your currencies.")).unwrap()
 }
 fn convert_currencies(currency_map: HashMap<String, f32>, arguments: Cli) {
-    let orgin_multiplier = currency_map
-        .get(&arguments.orgin_currency)
+    let origin_multiplier = currency_map
+        .get(&arguments.origin_currency)
         .expect("Invalid currency name");
     let final_multiplier = currency_map
         .get(&arguments.final_currency)
         .expect("Invalid currency name");
-    let final_amount = orgin_multiplier * final_multiplier * arguments.amount;
+    let final_amount = origin_multiplier * final_multiplier * arguments.amount;
     println!(
         "{} {} is {} {}",
-        arguments.amount, arguments.orgin_currency, final_amount, arguments.final_currency
+        arguments.amount, arguments.origin_currency, final_amount, arguments.final_currency
     )
 }
 
